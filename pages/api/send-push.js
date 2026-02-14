@@ -1,24 +1,30 @@
 import admin from "firebase-admin";
 
-let app;
-
 if (!admin.apps.length) {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  const serviceAccount = JSON.parse(
+    process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, "\n")
+  );
 
-  app = admin.initializeApp({
+  admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
-} else {
-  app = admin.app();
 }
 
 export default async function handler(req, res) {
+  // CORS para front-end externo (opcional)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido" });
   }
 
   const { token, title, body } = req.body;
-
   if (!token || !title || !body) {
     return res.status(400).json({ error: "token, title e body são obrigatórios" });
   }
